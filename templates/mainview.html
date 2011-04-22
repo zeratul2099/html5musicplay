@@ -1,0 +1,161 @@
+<html><head>
+<title></title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
+<script type="text/javascript">
+$('html').ajaxSend(function(event, xhr, settings) {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    //if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+        // Only send the token to relative URLs i.e. locally.
+        xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+    //}
+});
+</script>
+<!--<link href="/css/pepper-grinder/jquery-ui-1.8.11.custom.css" type="text/css" rel="stylesheet">-->
+<link href="/css/trontastic/jquery-ui-1.8.11.custom.css" type="text/css" rel="stylesheet">
+<link href='http://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+	<style>
+	body {
+	  font-family:'Orbitron', 'monospace';
+	  
+	}
+	#toolbar {
+		padding: 13px 3px 10px 3px;
+		margin-top: 3em;
+		margin-bottom: 1em;
+		width: 35%;
+		font-size: 80%;
+	}
+	ul {
+       list-style: none;
+
+    }
+	#songInfoDiv {
+      margin-bottom: 1em;
+    }
+	#playListDiv {
+	  margin: 1em;
+	}
+	#progressbar {
+	  width: 35%;
+	}
+	</style>
+</head>
+<body>
+<script type="text/javascript">
+var player;
+var currentPath = ""
+$(document).ready( function() {
+
+  $(".jqbutton").button();
+  $("#playPauseBtn").button({
+            icons: {
+                primary: "ui-icon-play"
+            },text: false})
+  $(".upBtn").button({
+            icons: {
+                primary: "ui-icon-arrowreturnthick-1-w"
+            },text: false})
+  player = $('#player').get(0)
+  getFiles(currentPath);
+  updateAudioInfo();
+$( "#progressbar" ).progressbar({
+			value: 37
+		});
+});
+function updateAudioInfo() {
+  $('#filenameSpan').text(player.src);
+  $('#durationSpan').text(parseInt(player.currentTime)+"/"+parseInt(player.duration));
+
+}
+function stopPlaying() {
+  player.pause();
+  player.currentTime=0;
+}
+function loadSong(song) {
+player.setAttribute('src', '/music/'+song);
+player.load();
+playPause();
+updateAudioInfo();
+}
+function playPause() {
+  if (player.paused) {
+    player.play();
+	$("#playPauseBtn").button({
+            icons: {
+                primary: "ui-icon-pause"
+            },text: false})
+  } else {
+    player.pause();
+	$("#playPauseBtn").button({
+            icons: {
+                primary: "ui-icon-play"
+            },text: false})
+  }
+}
+function getFiles(path) {
+  $.post("/getFiles", {"path":path}, function(data){getFilesCallback(data[0],data[1],path)})
+}
+function getFilesCallback(files, dirs, path) {
+  currentPath = path;
+  $('#fileList').empty();
+  for (i in dirs) {
+  $('#fileList').append($("<li><a id='dirItem"+i+"'>"+currentPath+"/"+dirs[i]+"</a>"));
+  $('#dirItem'+i).attr('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'")');
+  }
+  for (i in files) {
+    $('#fileList').append($("<li><a class='ui-dialog-title' id='songItem"+i+"'>"+files[i]+"</a>"));
+    $('#songItem'+i).attr('onclick', 'loadSong("'+files[i]+'")');
+
+  }
+}
+function getParentDir(path) {
+  list = path.split("/");
+  list.pop();
+  return list.join("/");
+
+}
+</script>
+<div id='playerDiv'>
+<div id='songInfoDiv'>
+<div>Filename: <span id="filenameSpan"></span></div>
+<div>Duration: <span id="durationSpan"></span></div>
+<div id='progressbar'></div>
+</div>
+
+<div>
+
+<span id="toolbar" class="ui-widget-header ui-corner-all">
+
+<button onclick="playPause()" id="playPauseBtn">Play/Pause</button>
+<button onclick="stopPlaying()" class="jqbutton">Stop</button>
+<button onclick="alert('foo')" class="jqbutton">Prev</button>
+<button onclick="updateAudioInfo()" class="jqbutton">Next</button>
+</span>
+
+</div>
+<div id='playListDiv'>
+<a onclick="getFiles(getParentDir(currentPath))" class="upBtn">One dir up</a>
+<ul id="fileList">
+
+</ul>
+</div>
+<audio src="" id="player" controls="controls">
+ Your browser does not support the audio element.
+ </audio>
+</body>
+</html>
