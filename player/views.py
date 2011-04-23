@@ -22,3 +22,13 @@ def getFiles(request):
 	return HttpResponse(json.dumps([files,dirs]), mimetype="application/json")
   except Exception, e:
 	print e
+	
+	
+# TODO:
+# volume control
+# shuffle, repeat
+# style player
+# seeking
+# show id-tag information
+# scrobble
+# on-the-fly converting mp3 to ogg

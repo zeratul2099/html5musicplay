@@ -33,26 +33,53 @@ $('html').ajaxSend(function(event, xhr, settings) {
 	  font-family:'Orbitron', 'monospace';
 	  
 	}
-	#toolbar {
-		padding: 13px 3px 10px 3px;
-		margin-top: 3em;
+
+	.toolbar {
+		padding-left: 5px;
+		padding-right: 5px;
+		padding-top: 3px;
+		padding-bottom: 3px;
+		
+		margin-top: 0.5em;
 		margin-bottom: 1em;
-		width: 35%;
+		margin-right: 1em;
 		font-size: 80%;
 	}
 	ul {
        list-style: none;
+	  padding-left: 0px;
 
     }
 	#songInfoDiv {
       margin-bottom: 1em;
     }
 	#playListDiv {
-	  margin: 1em;
+	  clear: both;
+	  margin: 1em 0em;
+	  border: black 1px solid;
+	  border-radius: 15px;
+	  padding: 20px;
+	  box-shadow: inset 1px 6px 32px lightgrey, inset -1px -5px 15px grey, 1px 2px 1px black;
+
+	  
 	}
 	#progressbar {
-	  width: 35%;
+	  width: 100%;
 	}
+	#durationSpan {
+	  padding-top: 1em;
+	  float: left;
+	  width: 12em;
+	  text-align: center;
+	  height: 1.8em;
+	 
+	}
+	#controlSpan {
+	  height:2.5em;
+	  float: left;
+	  vertical-align: middle;
+    }
+
 	</style>
 </head>
 <body>
@@ -66,23 +93,62 @@ $(document).ready( function() {
   $("#playPauseBtn").button({
             icons: {
                 primary: "ui-icon-play"
-            },text: false})
+            },text: false});
   $(".upBtn").button({
             icons: {
                 primary: "ui-icon-arrowreturnthick-1-w"
-            },text: false})
+            },text: false});
+  $("#stopBtn").button({
+            icons: {
+                primary: "ui-icon-stop"
+            },text: false});
+  $("#prevNextSpan").buttonset();
+  $("#prevBtn").button({
+            icons: {
+                primary: "ui-icon-seek-prev"
+            },text: false});
+  $("#nextBtn").button({
+            icons: {
+                primary: "ui-icon-seek-next"
+            },text: false});
+  $("#shuffleRepeatSpan").buttonset();
+  $("#shuffleBtn").button({
+            icons: {
+                primary: "ui-icon-shuffle"
+            },text: false});
+  $("#repeatBtn").button({
+            icons: {
+                primary: "ui-icon-refresh"
+            },text: false});
   player = $('#player').get(0)
   getFiles(currentPath);
   updateAudioInfo();
-  $(player).bind('ended', function(){playNext()})
+  $(player).bind('ended', function(){playNext()});
+  $(player).bind('timeupdate', function(){updateAudioInfo()});
+  $(player).bind('loadedmetadata', function(){updateAudioInfo()});
 $( "#progressbar" ).progressbar({
-			value: 37
+			value: 0
 		});
 });
 function updateAudioInfo() {
   $('#filenameSpan').text(player.src);
-  $('#durationSpan').text(parseInt(player.currentTime)+"/"+parseInt(player.duration));
-  $('#currentTrackSpan').text(currentTrack);
+  $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(player.duration)));
+  $('#currentTrackSpan').text(currentTrack+1);
+  progress = player.currentTime * 100 / player.duration;
+  $('#progressbar div').animate({'width': progress + '%' },{ queue:false, duration:500, easing:"linear" });
+
+}
+function convertSeconds(seconds) {
+  if (isNaN(seconds)) {
+	return "0:00";
+  }
+  minutes = parseInt(seconds / 60);
+  seconds = seconds % 60;
+  if (seconds < 10) {
+	  seconds = "0"+seconds
+  }
+
+  return minutes+":"+seconds;
 
 }
 function stopPlaying() {
@@ -94,7 +160,6 @@ player.setAttribute('src', '/music/'+song);
 player.load();
 playPause();
 currentTrack = trackNumber;
-updateAudioInfo();
 }
 function playPause() {
   if (player.paused) {
@@ -116,14 +181,17 @@ function getFiles(path) {
 }
 function getFilesCallback(files, dirs, path) {
   currentPath = path;
+  $('#dirList').empty();
   $('#fileList').empty();
   for (i in dirs) {
-  $('#fileList').append($("<li><a id='dirItem"+i+"'>"+currentPath+"/"+dirs[i]+"</a>"));
-  $('#dirItem'+i).attr('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'")');
+  $('#dirList').append($("<li><a id='dirItem"+i+"' href='#'>"+currentPath+"/"+dirs[i]+"</a>"));
+  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
+  $('#dirItem'+i).get(0).setAttribute('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'");return false;');
   }
   for (i in files) {
-    $('#fileList').append($("<li><a class='ui-dialog-title' id='songItem"+i+"'>"+files[i]+"</a>"));
-    $('#songItem'+i).attr('onclick', 'loadSong("'+files[i]+'", '+i+')');
+    $('#fileList').append($("<li><a href='#' id='songItem"+i+"'>"+files[i]+"</a>"));
+    // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
+    $('#songItem'+i).get(0).setAttribute('onclick', 'loadSong("'+files[i]+'", '+i+');return false;');
 
   }
 }
@@ -134,37 +202,59 @@ function getParentDir(path) {
 
 }
 function playNext() {
-  currentTrack = currentTrack+1;
-  $('#songItem'+currentTrack).click();
+  numTracks = $('#fileList').children().length;
+  if ($('#shuffleBtn').attr("checked")) {
+    nextTrack = parseInt(Math.random()*10);
+  } else {
+	nextTrack = currentTrack+1;
+	if ($('#repeatBtn').attr("checked") && nextTrack==numTracks) {
+	  nextTrack = 0;
+	}
+  }
+  $('#songItem'+(nextTrack)).click();
+  
+}
+function playPrev() {
+  $('#songItem'+(currentTrack-1)).click();
   
 }
 </script>
 <div id='playerDiv'>
 <div id='songInfoDiv'>
 <div>Filename: <span id="filenameSpan"></span></div>
-<div>Duration: <span id="durationSpan"></span></div>
 <div>Track Number: <span id="currentTrackSpan"></span></div>
 <div id='progressbar'></div>
 </div>
 
-<div>
+<div id="toolbarContainerDiv">
 
-<span id="toolbar" class="ui-widget-header ui-corner-all">
+<span id="controlSpan" class="ui-widget-header ui-corner-all toolbar">
 
 <button onclick="playPause()" id="playPauseBtn">Play/Pause</button>
-<button onclick="stopPlaying()" class="jqbutton">Stop</button>
-<button onclick="alert('foo')" class="jqbutton">Prev</button>
-<button onclick="playNext()" class="jqbutton">Next</button>
+<button onclick="stopPlaying()" id="stopBtn">Stop</button>
+<span id="prevNextSpan">
+<button onclick="playPrev()" id="prevBtn">Prev</button>
+<button onclick="playNext()" id="nextBtn">Next</button>
 </span>
-
+<span id="shuffleRepeatSpan">
+<input type="checkbox" id="shuffleBtn">
+<label for=shuffleBtn>Shuffle</label>
+<input type="checkbox" id="repeatBtn" name="repeatBtn" value="Repeat">
+<label for=repeatBtn>Repeat</label>
+</span>
+</span>
+<span id="durationSpan" class="ui-widget-header ui-corner-all toolbar"><span></span></span>
 </div>
-<div id='playListDiv'>
+<div id='playListDiv' class='ui-widget-header'>
 <a onclick="getFiles(getParentDir(currentPath))" class="upBtn">One dir up</a>
-<ul id="fileList">
+<ul id="dirList">
 
 </ul>
+<ol id="fileList">
+
+</ol>
 </div>
-<audio src="" id="player" controls="controls">
+<audio src="" id="player">
  Your browser does not support the audio element.
  </audio>
 </body>
