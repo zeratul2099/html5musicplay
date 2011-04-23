@@ -59,6 +59,7 @@ $('html').ajaxSend(function(event, xhr, settings) {
 <script type="text/javascript">
 var player;
 var currentPath = ""
+var currentTrack = 0;
 $(document).ready( function() {
 
   $(".jqbutton").button();
@@ -73,6 +74,7 @@ $(document).ready( function() {
   player = $('#player').get(0)
   getFiles(currentPath);
   updateAudioInfo();
+  $(player).bind('ended', function(){playNext()})
 $( "#progressbar" ).progressbar({
 			value: 37
 		});
@@ -80,16 +82,18 @@ $( "#progressbar" ).progressbar({
 function updateAudioInfo() {
   $('#filenameSpan').text(player.src);
   $('#durationSpan').text(parseInt(player.currentTime)+"/"+parseInt(player.duration));
+  $('#currentTrackSpan').text(currentTrack);
 
 }
 function stopPlaying() {
   player.pause();
   player.currentTime=0;
 }
-function loadSong(song) {
+function loadSong(song, trackNumber) {
 player.setAttribute('src', '/music/'+song);
 player.load();
 playPause();
+currentTrack = trackNumber;
 updateAudioInfo();
 }
 function playPause() {
@@ -119,7 +123,7 @@ function getFilesCallback(files, dirs, path) {
   }
   for (i in files) {
     $('#fileList').append($("<li><a class='ui-dialog-title' id='songItem"+i+"'>"+files[i]+"</a>"));
-    $('#songItem'+i).attr('onclick', 'loadSong("'+files[i]+'")');
+    $('#songItem'+i).attr('onclick', 'loadSong("'+files[i]+'", '+i+')');
 
   }
 }
@@ -129,11 +133,17 @@ function getParentDir(path) {
   return list.join("/");
 
 }
+function playNext() {
+  currentTrack = currentTrack+1;
+  $('#songItem'+currentTrack).click();
+  
+}
 </script>
 <div id='playerDiv'>
 <div id='songInfoDiv'>
 <div>Filename: <span id="filenameSpan"></span></div>
 <div>Duration: <span id="durationSpan"></span></div>
+<div>Track Number: <span id="currentTrackSpan"></span></div>
 <div id='progressbar'></div>
 </div>
 
@@ -144,7 +154,7 @@ function getParentDir(path) {
 <button onclick="playPause()" id="playPauseBtn">Play/Pause</button>
 <button onclick="stopPlaying()" class="jqbutton">Stop</button>
 <button onclick="alert('foo')" class="jqbutton">Prev</button>
-<button onclick="updateAudioInfo()" class="jqbutton">Next</button>
+<button onclick="playNext()" class="jqbutton">Next</button>
 </span>
 
 </div>
