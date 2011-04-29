@@ -87,6 +87,7 @@ $('html').ajaxSend(function(event, xhr, settings) {
 var player;
 var currentPath = ""
 var currentTrack = 0;
+var metaData = new Array();
 $(document).ready( function() {
 
   $(".jqbutton").button();
@@ -131,12 +132,16 @@ $( "#progressbar" ).progressbar({
 		});
 });
 function updateAudioInfo() {
-  $('#filenameSpan').text(player.src);
+  if (metaData[currentTrack] != undefined){
+  $('#artistSpan').text(metaData[currentTrack][1]["ARTIST"][0]);
+  $('#titleSpan').text(metaData[currentTrack][1]["TITLE"][0]);
+  $('#albumSpan').text(metaData[currentTrack][1]["ALBUM"][0]);
+  }
   $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(player.duration)));
   $('#currentTrackSpan').text(currentTrack+1);
   progress = player.currentTime * 100 / player.duration;
   $('#progressbar div').animate({'width': progress + '%' },{ queue:false, duration:500, easing:"linear" });
-
+   
 }
 function convertSeconds(seconds) {
   if (isNaN(seconds)) {
@@ -181,6 +186,7 @@ function getFiles(path) {
 }
 function getFilesCallback(files, dirs, path) {
   currentPath = path;
+  metaData = files;
   $('#dirList').empty();
   $('#fileList').empty();
   for (i in dirs) {
@@ -188,10 +194,12 @@ function getFilesCallback(files, dirs, path) {
   // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
   $('#dirItem'+i).get(0).setAttribute('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'");return false;');
   }
+  
   for (i in files) {
-    $('#fileList').append($("<li><a href='#' id='songItem"+i+"'>"+files[i]+"</a>"));
+    $('#fileList').append($("<li><a href='#' id='songItem"+i+"'>"+files[i][1]["TITLE"]+"</a>"));
     // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
-    $('#songItem'+i).get(0).setAttribute('onclick', 'loadSong("'+files[i]+'", '+i+');return false;');
+    $('#songItem'+i).get(0).setAttribute('onclick', 'loadSong("'+files[i][0]+'", '+i+');return false;');
+    
 
   }
 }
@@ -221,7 +229,9 @@ function playPrev() {
 </script>
 <div id='playerDiv'>
 <div id='songInfoDiv'>
-<div>Filename: <span id="filenameSpan"></span></div>
+<div>Artist: <span id="artistSpan"></span></div>
+<div>Title: <span id="titleSpan"></span></div>
+<div>Album: <span id="albumSpan"></span></div>
 <div>Track Number: <span id="currentTrackSpan"></span></div>
 <div id='progressbar'></div>
 </div>
