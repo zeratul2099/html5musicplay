@@ -5,7 +5,6 @@ import os, json
 from django.conf import settings
 from django.core.servers.basehttp import FileWrapper
 import django.views.static
-import ogg.vorbis
 import subprocess
 import mutagen
 
