@@ -71,14 +71,14 @@ def fileConverter(request, filepath):
 	  response = HttpResponse(wrapper, mimetype='application/ogg')
 	  response['Content-Length'] = os.path.getsize(os.path.join(cacheDir,filepath))
 
-	  response['Content-Disposition'] = 'attachment; filename='+filepath
+	  response['Content-Disposition'] = 'attachment; filename='+filepath.encode("utf8")
 	  return response
 	except Exception, e:
-	  print e
+	  raise
 
 # TODO:
 # volume control
 # style player
 # seeking
 # scrobble
-# on-the-fly converting mp3 to ogg
+# handle converting error
