@@ -127,6 +127,8 @@ $(document).ready( function() {
   $(player).bind('ended', function(){playNext()});
   $(player).bind('timeupdate', function(){updateAudioInfo()});
   $(player).bind('loadedmetadata', function(){updateAudioInfo()});
+  $(player).bind('loadstart', function(){$('#loadingSpan').show()});
+  $(player).bind('loadeddata', function(){$('#loadingSpan').hide()});
 $( "#progressbar" ).progressbar({
 			value: 0
 		});
@@ -162,6 +164,7 @@ function stopPlaying() {
 }
 function loadSong(song, trackNumber) {
 player.setAttribute('src', '/music/'+song);
+
 player.load();
 playPause();
 currentTrack = trackNumber;
@@ -254,6 +257,7 @@ function playPrev() {
 </span>
 </span>
 <span id="durationSpan" class="ui-widget-header ui-corner-all toolbar"><span></span></span>
+<span id="loadingSpan" style="display:none">Loading...</span>
 </div>
 <div id='playListDiv' class='ui-widget-header'>
 <a onclick="getFiles(getParentDir(currentPath))" class="upBtn">One dir up</a>
