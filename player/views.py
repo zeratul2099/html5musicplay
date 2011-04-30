@@ -7,6 +7,8 @@ from django.core.servers.basehttp import FileWrapper
 import django.views.static
 import ogg.vorbis
 import subprocess
+import mutagen
+
 
 rootPath = settings.MUSIC_ROOT
 cacheDir = "/tmp/html5playerCache/"
@@ -31,9 +33,11 @@ def getFiles(request):
 	fileData = {}
 	for i, fileName in enumerate(files):
 	  if not fileName.endswith(".mp3.ogg"):
-		fileData[i] = (fileName, ogg.vorbis.VorbisFile(os.path.join(rootPath, fileName)).comment().as_dict())
+		tags = dict(mutagen.File(os.path.join(rootPath, fileName), easy=True))
+		fileData[i] = (fileName, tags)
 	  else:
-		fileData[i] = (fileName, {"TITLE": "mp3", "ARTIST": "mp3", "ALBUM": "mp3"})
+		tags = dict(mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True))
+		fileData[i] = (fileName, tags)
 	return HttpResponse(json.dumps([fileData,dirs]), mimetype="application/json")
   except Exception, e:
 	print e

@@ -134,10 +134,25 @@ $( "#progressbar" ).progressbar({
 		});
 });
 function updateAudioInfo() {
-  if (metaData[currentTrack] != undefined){
-  $('#artistSpan').text(metaData[currentTrack][1]["ARTIST"][0]);
-  $('#titleSpan').text(metaData[currentTrack][1]["TITLE"][0]);
-  $('#albumSpan').text(metaData[currentTrack][1]["ALBUM"][0]);
+  if (metaData[currentTrack] != undefined && metaData[currentTrack][1] != undefined){
+    if (metaData[currentTrack][1]["artist"] == undefined) {
+	artist = "";
+  } else {
+	artist = metaData[currentTrack][1]["artist"][0];
+  }
+  if (metaData[currentTrack][1]["title"] == undefined) {
+	title = metaData[currentTrack][0];
+  } else {
+	title = metaData[currentTrack][1]["title"][0];
+  }
+    if (metaData[currentTrack][1]["album"] == undefined) {
+	album = "";
+  } else {
+	album = metaData[currentTrack][1]["album"][0];
+  }
+  $('#artistSpan').text(artist);
+  $('#titleSpan').text(title);
+  $('#albumSpan').text(album);
   }
   $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(player.duration)));
   $('#currentTrackSpan').text(currentTrack+1);
@@ -199,7 +214,12 @@ function getFilesCallback(files, dirs, path) {
   }
   
   for (i in files) {
-    $('#fileList').append($("<li><a href='#' id='songItem"+i+"'>"+files[i][1]["TITLE"]+"</a>"));
+	if (files[i][1]["title"] == undefined) {
+	  title = files[i][0];
+	} else {
+	  title = files[i][1]["title"];
+	}
+    $('#fileList').append($("<li><a href='#' id='songItem"+i+"'>"+title+"</a>"));
     // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
     $('#songItem'+i).get(0).setAttribute('onclick', 'loadSong("'+files[i][0]+'", '+i+');return false;');
     
