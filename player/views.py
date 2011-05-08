@@ -20,7 +20,9 @@ def getFiles(request):
   try:
 	if request.method == 'POST' and "path" in request.POST:
 	  
-	  path = request.POST["path"].lstrip("/");
+	  path = request.POST["path"].lstrip("/")
+	  if ".." in path:
+		return HttpResponse("Forbidden", mimetype="text/plain", status=403)
 	  files = sorted(map(lambda x: os.path.join(path,x), filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir(os.path.join(rootPath, path)))))
 	  dirs = filter(lambda x: os.path.isdir(os.path.join(rootPath, path, x)),os.listdir(os.path.join(rootPath, path)))
 	  files = map(_getOggedFilename, files)
