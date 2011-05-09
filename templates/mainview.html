@@ -53,12 +53,10 @@ $('html').ajaxSend(function(event, xhr, settings) {
 	#songInfoDiv {
       margin-bottom: 1em;
     }
-	#playListDiv {
+	#tabs {
 	  clear: both;
 	  margin: 1em 0em;
-	  border: black 1px solid;
 	  border-radius: 15px;
-	  padding: 20px;
 	  box-shadow: inset 1px 6px 32px lightgrey, inset -1px -5px 15px grey, 1px 2px 1px black;
 
 	  
@@ -88,6 +86,7 @@ var player;
 var currentPath = ""
 var currentTrack = 0;
 var metaData = new Array();
+var currentList = "#fileList";
 $(document).ready( function() {
 
   $(".jqbutton").button();
@@ -121,7 +120,9 @@ $(document).ready( function() {
             icons: {
                 primary: "ui-icon-refresh"
             },text: false});
-  player = $('#player').get(0)
+
+  $("#tabs").tabs();
+  player = $('#player').get(0);
   getFiles(currentPath);
   updateAudioInfo();
   $(player).bind('ended', function(){playNext()});
@@ -202,29 +203,37 @@ function playPause() {
 function getFiles(path) {
   $.post("/getFiles", {"path":path}, function(data){getFilesCallback(data[0],data[1],path)})
 }
-function getFilesCallback(files, dirs, path) {
-  currentPath = path;
-  metaData = files;
-  $('#dirList').empty();
-  $('#fileList').empty();
-  for (i in dirs) {
-  $('#dirList').append($("<li><a id='dirItem"+i+"' href='#'>"+currentPath+"/"+dirs[i]+"</a>"));
-  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
-  $('#dirItem'+i).get(0).setAttribute('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'");return false;');
-  }
+function getFilesCallback(files, dirs, path, playList) {
+  if (playList != true) {
+	currentPath = path;
+	metaData = files;
   
-  for (i in files) {
-	if (files[i][1]["title"] == undefined) {
-	  title = files[i][0];
-	} else {
-	  title = files[i][1]["title"];
+	$('#dirList').empty();
+	$('#fileList').empty();
+	for (i in dirs) {
+	  $('#dirList').append($("<li><a id='dirItem"+i+"' href='#'>"+currentPath+"/"+dirs[i]+"</a>"));
+	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
+	  $('#dirItem'+i).get(0).setAttribute('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'");return false;');
 	}
-    $('#fileList').append($("<li><a href='#' id='songItem"+i+"'>"+title+"</a>"));
-    // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
-    $('#songItem'+i).get(0).setAttribute('onclick', 'loadSong("'+files[i][0]+'", '+i+');return false;');
+	list = "#fileList";
+  } else {
+	
+	list = "#playList";
+	$(list).empty();
+  }
+	for (i in files) {
+	  if (files[i][1]["title"] == undefined) {
+		title = files[i][0];
+	  } else {
+		title = files[i][1]["title"];
+	  }
+	  $(list).append($("<li><a href='#' class='songItem"+i+"'>"+title+"</a>"));
+	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
+	  $(list+' .songItem'+i).get(0).setAttribute('onclick', 'currentList="'+list+'";loadSong("'+files[i][0]+'", '+i+');return false;');
     
 
-  }
+	}
+  
 }
 function getParentDir(path) {
   list = path.split("/");
@@ -233,20 +242,20 @@ function getParentDir(path) {
 
 }
 function playNext() {
-  numTracks = $('#fileList').children().length;
+  numTracks = $(currentList).children().length;
   if ($('#shuffleBtn').attr("checked")) {
-    nextTrack = parseInt(Math.random()*10);
+    nextTrack = parseInt(Math.random()*numTracks);
   } else {
 	nextTrack = currentTrack+1;
 	if ($('#repeatBtn').attr("checked") && nextTrack==numTracks) {
 	  nextTrack = 0;
 	}
   }
-  $('#songItem'+(nextTrack)).click();
+  $(currentList+' .songItem'+(nextTrack)).click();
   
 }
 function playPrev() {
-  $('#songItem'+(currentTrack-1)).click();
+  $(currentList+' .songItem'+(currentTrack-1)).click();
   
 }
 </script>
@@ -279,14 +288,24 @@ function playPrev() {
 <span id="durationSpan" class="ui-widget-header ui-corner-all toolbar"><span></span></span>
 <span id="loadingSpan" style="display:none">Loading...</span>
 </div>
-<div id='playListDiv' class='ui-widget-header'>
-<a onclick="getFiles(getParentDir(currentPath))" class="upBtn">One dir up</a>
-<ul id="dirList">
+<div id='tabs'>
+  <ul>
+	<li><a href="#fileListDiv">Files</a></li>
+	<li><a href="#playListDiv">Playlist</a></li>
+  </ul>
+  <div id='fileListDiv'>
+	<a onclick="getFiles(getParentDir(currentPath))" class="upBtn">One dir up</a>
+	<ul id="dirList">
 
-</ul>
-<ol id="fileList">
+	</ul>
+	<ol id="fileList">
 
-</ol>
+	</ol>
+  </div>
+  <div id="playListDiv" >
+	<ol id="playList">
+	</ol>
+  </div>
 </div>
 <audio src="" id="player">
  Your browser does not support the audio element.

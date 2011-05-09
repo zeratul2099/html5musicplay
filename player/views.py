@@ -79,6 +79,8 @@ def fileConverter(request, filepath):
 	  raise
 
 # TODO:
+# playlist
+# stream file during conversion
 # volume control
 # style player
 # seeking
