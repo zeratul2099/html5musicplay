@@ -85,7 +85,8 @@ $('html').ajaxSend(function(event, xhr, settings) {
 var player;
 var currentPath = ""
 var currentTrack = 0;
-var metaData = new Array();
+var playListMetaData = new Array();
+var filesMetaData = new Array();
 var currentList = "#fileList";
 $(document).ready( function() {
 
@@ -122,6 +123,13 @@ $(document).ready( function() {
             },text: false});
 
   $("#tabs").tabs();
+  $( "#playList" ).sortable({
+			placeholder: "ui-state-highlight"
+	});
+  $("#playList").disableSelection();
+  $("#playList").bind("sortupdate", function(event, ui){
+	 alert($(event.target).children().index(event.srcElement));
+});
   player = $('#player').get(0);
   getFiles(currentPath);
   updateAudioInfo();
@@ -135,6 +143,11 @@ $( "#progressbar" ).progressbar({
 		});
 });
 function updateAudioInfo() {
+  if (currentList == "#playList") {
+	var metaData = playListMetaData;
+  } else {
+	var metaData = filesMetaData;
+  }
   if (metaData[currentTrack] != undefined && metaData[currentTrack][1] != undefined){
     if (metaData[currentTrack][1]["artist"] == undefined) {
 	artist = "";
@@ -174,6 +187,14 @@ function convertSeconds(seconds) {
   return minutes+":"+seconds;
 
 }
+
+function resortArray(array, from, to) {
+  element = array.splice(from, from);
+  array.splice(to, 0, element[0]);
+  return array;
+
+}
+
 function stopPlaying() {
   player.pause();
   player.currentTime=0;
@@ -203,10 +224,14 @@ function playPause() {
 function getFiles(path) {
   $.post("/getFiles", {"path":path}, function(data){getFilesCallback(data[0],data[1],path)})
 }
+function getPlaylist() {
+  $.post("/getPlaylist", {}, function(data){getFilesCallback(data[0],data[1],".", true)})
+}
 function getFilesCallback(files, dirs, path, playList) {
+  
   if (playList != true) {
 	currentPath = path;
-	metaData = files;
+	filesMetaData = files;
   
 	$('#dirList').empty();
 	$('#fileList').empty();
@@ -217,7 +242,7 @@ function getFilesCallback(files, dirs, path, playList) {
 	}
 	list = "#fileList";
   } else {
-	
+	playListMetaData = files;
 	list = "#playList";
 	$(list).empty();
   }
@@ -246,16 +271,16 @@ function playNext() {
   if ($('#shuffleBtn').attr("checked")) {
     nextTrack = parseInt(Math.random()*numTracks);
   } else {
-	nextTrack = currentTrack+1;
-	if ($('#repeatBtn').attr("checked") && nextTrack==numTracks) {
-	  nextTrack = 0;
+	nextEle = $(currentList+' .songItem'+(currentTrack)).parent().next().children();
+	if ($('#repeatBtn').attr("checked") && nextEle.length == 0) {
+	  nextEle = $($(currentList).children()[0]).children();
 	}
   }
-  $(currentList+' .songItem'+(nextTrack)).click();
+  $(nextEle).click();
   
 }
 function playPrev() {
-  $(currentList+' .songItem'+(currentTrack-1)).click();
+  $(currentList+' .songItem'+(currentTrack)).parent().prev().children().click();
   
 }
 </script>
@@ -303,8 +328,8 @@ function playPrev() {
 	</ol>
   </div>
   <div id="playListDiv" >
-	<ol id="playList">
-	</ol>
+	<ul id="playList">
+	</ul>
   </div>
 </div>
 <audio src="" id="player">

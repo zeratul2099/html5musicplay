@@ -8,7 +8,7 @@ urlpatterns = patterns('',
     # Examples:
      url(r'^$', 'html5musicplay.player.views.home', name='home'),
      url(r'^getFiles$', 'html5musicplay.player.views.getFiles'),
-     
+     url(r'^getPlaylist$', 'html5musicplay.player.views.getPlaylist'),
      #(r'^music/(?P<path>.*)$', 'django.views.static.serve',
       #  {'document_root': settings.MUSIC_ROOT}),
      url(r'^music/(?P<filepath>.*)$', 'html5musicplay.player.views.fileConverter'),

@@ -43,6 +43,21 @@ def getFiles(request):
   except Exception, e:
 	print e
 
+def getPlaylist(request):
+  """ test implementation """
+  path = "Blind Guardian - At The Edge Of Time"
+  files = sorted(map(lambda x: os.path.join(path,x), filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir(os.path.join(rootPath, path)))))
+  files = map(_getOggedFilename, files)
+  fileData = {}
+  for i, fileName in enumerate(files):
+	if not fileName.endswith(".mp3.ogg"):
+	  tags = dict(mutagen.File(os.path.join(rootPath, fileName), easy=True))
+	  fileData[i] = (fileName, tags)
+	else:
+	  tags = dict(mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True))
+	  fileData[i] = (fileName, tags)
+  return HttpResponse(json.dumps([fileData,{}]), mimetype="application/json")
+	  
 def _getOggedFilename(filename):
   if filename.endswith(".mp3"):
 	return filename+".ogg"
@@ -79,7 +94,7 @@ def fileConverter(request, filepath):
 	  raise
 
 # TODO:
-# playlist
+# *playlist
 # stream file during conversion
 # volume control
 # style player
