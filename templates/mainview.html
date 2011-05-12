@@ -77,16 +77,12 @@ $('html').ajaxSend(function(event, xhr, settings) {
 	  float: left;
 	  vertical-align: middle;
     }
-
+	
 	</style>
 </head>
 <body>
 <script type="text/javascript">
 var player;
-var currentPath = ""
-var currentTrack = 0;
-var playListMetaData = new Array();
-var filesMetaData = new Array();
 var currentList = "#fileList";
 $(document).ready( function() {
 
@@ -127,11 +123,12 @@ $(document).ready( function() {
 			placeholder: "ui-state-highlight"
 	});
   $("#playList").disableSelection();
-  $("#playList").bind("sortupdate", function(event, ui){
-	 alert($(event.target).children().index(event.srcElement));
-});
+
   player = $('#player').get(0);
-  getFiles(currentPath);
+  if (localStorage["currentPath"] == undefined) {
+	localStorage["currentPath"] = "";
+  }
+  getFiles(localStorage["currentPath"]);
   updateAudioInfo();
   $(player).bind('ended', function(){playNext()});
   $(player).bind('timeupdate', function(){updateAudioInfo()});
@@ -143,33 +140,35 @@ $( "#progressbar" ).progressbar({
 		});
 });
 function updateAudioInfo() {
-  if (currentList == "#playList") {
-	var metaData = playListMetaData;
+  if (localStorage["currentList"] == "#playList") {
+	var metaData = JSON.parse(localStorage["playListMetaData"]);
   } else {
-	var metaData = filesMetaData;
+	var metaData = JSON.parse(localStorage["filesMetaData"]);
   }
-  if (metaData[currentTrack] != undefined && metaData[currentTrack][1] != undefined){
-    if (metaData[currentTrack][1]["artist"] == undefined) {
+  $(localStorage["currentList"]+" a").removeClass("ui-state-highlight");
+  $(localStorage["currentList"]+" .songItem"+localStorage["currentTrack"]).addClass("ui-state-highlight");
+  if (metaData[localStorage["currentTrack"]] != undefined && metaData[localStorage["currentTrack"]][1] != undefined){
+    if (metaData[localStorage["currentTrack"]][1]["artist"] == undefined) {
 	artist = "";
   } else {
-	artist = metaData[currentTrack][1]["artist"][0];
+	artist = metaData[localStorage["currentTrack"]][1]["artist"][0];
   }
-  if (metaData[currentTrack][1]["title"] == undefined) {
-	title = metaData[currentTrack][0];
+  if (metaData[localStorage["currentTrack"]][1]["title"] == undefined) {
+	title = metaData[localStorage["currentTrack"]][0];
   } else {
-	title = metaData[currentTrack][1]["title"][0];
+	title = metaData[localStorage["currentTrack"]][1]["title"][0];
   }
-    if (metaData[currentTrack][1]["album"] == undefined) {
+    if (metaData[localStorage["currentTrack"]][1]["album"] == undefined) {
 	album = "";
   } else {
-	album = metaData[currentTrack][1]["album"][0];
+	album = metaData[localStorage["currentTrack"]][1]["album"][0];
   }
   $('#artistSpan').text(artist);
   $('#titleSpan').text(title);
   $('#albumSpan').text(album);
   }
   $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(player.duration)));
-  $('#currentTrackSpan').text(currentTrack+1);
+  //$('#currentTrackSpan').text(localStorage["currentTrack"]+1);
   progress = player.currentTime * 100 / player.duration;
   $('#progressbar div').animate({'width': progress + '%' },{ queue:false, duration:500, easing:"linear" });
    
@@ -204,7 +203,7 @@ player.setAttribute('src', '/music/'+song);
 
 player.load();
 playPause();
-currentTrack = trackNumber;
+localStorage["currentTrack"] = trackNumber;
 }
 function playPause() {
   if (player.paused) {
@@ -230,19 +229,20 @@ function getPlaylist() {
 function getFilesCallback(files, dirs, path, playList) {
   
   if (playList != true) {
-	currentPath = path;
-	filesMetaData = files;
+	localStorage["currentPath"] = path;
+	localStorage["currentTrack"] = undefined;
+	localStorage["filesMetaData"] = JSON.stringify(files);
   
 	$('#dirList').empty();
 	$('#fileList').empty();
 	for (i in dirs) {
-	  $('#dirList').append($("<li><a id='dirItem"+i+"' href='#'>"+currentPath+"/"+dirs[i]+"</a>"));
+	  $('#dirList').append($("<li><a id='dirItem"+i+"' href='#'>"+path+"/"+dirs[i]+"</a>"));
 	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
-	  $('#dirItem'+i).get(0).setAttribute('onclick', 'getFiles("'+currentPath+'/'+dirs[i]+'");return false;');
+	  $('#dirItem'+i).get(0).setAttribute('onclick', 'getFiles("'+path+'/'+dirs[i]+'");return false;');
 	}
 	list = "#fileList";
   } else {
-	playListMetaData = files;
+	localStorage=["playListMetaData"] = JSON.stringify(files);
 	list = "#playList";
 	$(list).empty();
   }
@@ -254,11 +254,11 @@ function getFilesCallback(files, dirs, path, playList) {
 	  }
 	  $(list).append($("<li><a href='#' class='songItem"+i+"'>"+title+"</a>"));
 	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
-	  $(list+' .songItem'+i).get(0).setAttribute('onclick', 'currentList="'+list+'";loadSong("'+files[i][0]+'", '+i+');return false;');
+	  $(list+' .songItem'+i).get(0).setAttribute('onclick', 'localStorage["currentList"]="'+list+'";loadSong("'+files[i][0]+'", '+i+');return false;');
     
 
 	}
-  
+	//loadSong(files[0][0],0);
 }
 function getParentDir(path) {
   list = path.split("/");
@@ -267,20 +267,20 @@ function getParentDir(path) {
 
 }
 function playNext() {
-  numTracks = $(currentList).children().length;
+  numTracks = $(localStorage["currentList"]).children().length;
   if ($('#shuffleBtn').attr("checked")) {
     nextTrack = parseInt(Math.random()*numTracks);
   } else {
-	nextEle = $(currentList+' .songItem'+(currentTrack)).parent().next().children();
+	nextEle = $(localStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().next().children();
 	if ($('#repeatBtn').attr("checked") && nextEle.length == 0) {
-	  nextEle = $($(currentList).children()[0]).children();
+	  nextEle = $($(localStorage["currentList"]).children()[0]).children();
 	}
   }
   $(nextEle).click();
   
 }
 function playPrev() {
-  $(currentList+' .songItem'+(currentTrack)).parent().prev().children().click();
+  $(clocalStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().prev().children().click();
   
 }
 </script>
@@ -319,7 +319,7 @@ function playPrev() {
 	<li><a href="#playListDiv">Playlist</a></li>
   </ul>
   <div id='fileListDiv'>
-	<a onclick="getFiles(getParentDir(currentPath))" class="upBtn">One dir up</a>
+	<a onclick="getFiles(getParentDir(localStorage['currentPath']))" class="upBtn">One dir up</a>
 	<ul id="dirList">
 
 	</ul>
