@@ -242,7 +242,7 @@ function getFilesCallback(files, dirs, path, playList) {
 	}
 	list = "#fileList";
   } else {
-	localStorage=["playListMetaData"] = JSON.stringify(files);
+	localStorage["playListMetaData"] = JSON.stringify(files);
 	list = "#playList";
 	$(list).empty();
   }
