@@ -77,7 +77,9 @@ $('html').ajaxSend(function(event, xhr, settings) {
 	  float: left;
 	  vertical-align: middle;
     }
-	
+#fileList li, #playList li { margin: 0 5px 5px 5px; padding: 5px;  width: 300px }
+
+.tabitem a { width:300px }	
 	</style>
 </head>
 <body>
@@ -118,15 +120,30 @@ $(document).ready( function() {
                 primary: "ui-icon-refresh"
             },text: false});
 
-  $("#tabs").tabs();
-  $( "#playList" ).sortable({
-			placeholder: "ui-state-highlight"
-	});
-  $("#playList").disableSelection();
+  
+  $( "#fileList, #playList" ).sortable().disableSelection();
+  var $tabs = $("#tabs").tabs();
+  var $tab_items = $( "ul:first li", $tabs ).droppable({
+			accept: ".connectedSortable li",
+			hoverClass: "ui-state-hover",
+			drop: function( event, ui ) {
+				var $item = $( this );
+				var $list = $( $item.find( "a" ).attr( "href" ) )
+					.find( ".connectedSortable" );
 
+				ui.draggable.hide( "slow", function() {
+					$tabs.tabs( "select", $tab_items.index( $item ) );
+					$( this ).appendTo( $list ).show( "slow" );
+				});
+			}
+		})
   player = $('#player').get(0);
   if (localStorage["currentPath"] == undefined) {
 	localStorage["currentPath"] = "";
+  }
+  if (localStorage["playListMetaData"] != undefined) {
+	getFilesCallback(JSON.parse(localStorage["playListMetaData"]), null, null, true);
+
   }
   getFiles(localStorage["currentPath"]);
   updateAudioInfo();
@@ -315,20 +332,21 @@ function playPrev() {
 </div>
 <div id='tabs'>
   <ul>
-	<li><a href="#fileListDiv">Files</a></li>
-	<li><a href="#playListDiv">Playlist</a></li>
+	<li class="tabitem"><a href="#fileListDiv">Files</a></li>
+	<li class="tabitem"><a href="#playListDiv">Playlist</a></li>
   </ul>
   <div id='fileListDiv'>
 	<a onclick="getFiles(getParentDir(localStorage['currentPath']))" class="upBtn">One dir up</a>
 	<ul id="dirList">
 
 	</ul>
-	<ol id="fileList">
+	<ul id="fileList" class="connectedSortable ui-helper-reset">
 
-	</ol>
+	</ul>
   </div>
   <div id="playListDiv" >
-	<ul id="playList">
+	<ul id="playList" class="connectedSortable ui-helper-reset">
+
 	</ul>
   </div>
 </div>
