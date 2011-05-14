@@ -97,6 +97,10 @@ $(document).ready( function() {
             icons: {
                 primary: "ui-icon-arrowreturnthick-1-w"
             },text: false});
+  $(".clearBtn").button({
+            icons: {
+                primary: "ui-icon-closethick"
+            },text: false});
   $("#stopBtn").button({
             icons: {
                 primary: "ui-icon-stop"
@@ -121,24 +125,33 @@ $(document).ready( function() {
             },text: false});
 
   
-  $( "#fileList, #playList" ).sortable().disableSelection();
+  $( "#fileList li" ).draggable({revert:true});
+  $( "#playList" ).sortable().disableSelection();
   var $tabs = $("#tabs").tabs();
-  var $tab_items = $( "ul:first li", $tabs ).droppable({
-			accept: ".connectedSortable li",
+  var $tab_items = $( "#playListTab" ).droppable({
+			accept: "#fileList.connectedSortable li",
 			hoverClass: "ui-state-hover",
 			drop: function( event, ui ) {
 // Insert playlist update magic HERE!
-				playListMetaData = JSON.parse(localStorage["playListMetaData"]);
+				if (localStorage["playListMetaData"] != undefined && localStorage["playListMetaData"] != "") {
+				  playListMetaData = JSON.parse(localStorage["playListMetaData"]);
+				  length = playListMetaData.length;
+				} else {
+				  playListMetaData = [];
+				  length = 0;
+				}
 				filesMetaData = JSON.parse(localStorage["filesMetaData"]);
-				length = playListMetaData.length;
+				
 				var $item = $( this );
 				var $list = $( $item.find( "a" ).attr( "href" ) )
 					.find( ".connectedSortable" );
 
-				ui.draggable.hide( "slow", function() {
+				ui.draggable.hide( "clip","slow", function() {
 					num = $("a",$(this)).attr("data-num");
 					$tabs.tabs( "select", $tab_items.index( $item ) );
 					$copy = $(this).clone();
+					$copy.attr("style", "");
+					$copy.attr("class", "");
 					$("a",$copy).attr("class", $("a",$(this)).attr("class").replace("songItem"+num, "songItem"+length));
 					$("a",$copy).attr("data-num", length);
 					$("a",$copy).get(0).setAttribute('onclick', 'localStorage["currentList"]="#playList";loadSong("'+filesMetaData[num][0]+'", '+length+');return false;');
@@ -148,7 +161,9 @@ $(document).ready( function() {
 					//$("#playList").append($("<li><a href='#' data-num='"+length+"' class='songItem"+length+"'>"+$("a", $(this)).text()+"</a>"));
 					// hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
 					//$('#playList .songItem'+length).get(0).setAttribute('onclick', 'localStorage["currentList"]="#playList";loadSong("'+files[i][0]+'", '+length+');return false;');
+					ui.draggable.show("clip","slow");
 				});
+				
 			}
 		})
   player = $('#player').get(0);
@@ -286,9 +301,10 @@ function getFilesCallback(files, dirs, path, playList) {
 	  $(list).append($("<li><a href='#' data-num='"+i+"' class='songItem"+i+"'>"+title+"</a>"));
 	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
 	  $(list+' .songItem'+i).get(0).setAttribute('onclick', 'localStorage["currentList"]="'+list+'";loadSong("'+files[i][0]+'", '+i+');return false;');
-    
+	  
 
 	}
+	$( "#fileList li" ).draggable({revert:true});
 	//loadSong(files[0][0],0);
 }
 function getParentDir(path) {
@@ -313,6 +329,11 @@ function playNext() {
 function playPrev() {
   $(localStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().prev().children().click();
   
+}
+function clearPlayList() {
+  localStorage["playListMetaData"] = "";
+  $("#playList").empty();
+
 }
 </script>
 <div id='playerDiv'>
@@ -346,8 +367,8 @@ function playPrev() {
 </div>
 <div id='tabs'>
   <ul>
-	<li class="tabitem"><a href="#fileListDiv">Files</a></li>
-	<li class="tabitem"><a href="#playListDiv">Playlist</a></li>
+	<li class="tabitem" id="fileListTab"><a href="#fileListDiv">Files</a></li>
+	<li class="tabitem" id="playListTab"><a href="#playListDiv">Playlist</a></li>
   </ul>
   <div id='fileListDiv'>
 	<a onclick="getFiles(getParentDir(localStorage['currentPath']))" class="upBtn">One dir up</a>
@@ -359,6 +380,7 @@ function playPrev() {
 	</ul>
   </div>
   <div id="playListDiv" >
+	<a onclick="clearPlayList()" class="clearBtn">Clear Playlist</a>
 	<ul id="playList" class="connectedSortable ui-helper-reset">
 
 	</ul>

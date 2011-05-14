@@ -24,9 +24,8 @@ def getFiles(request):
 	  if ".." in path:
 		return HttpResponse("Forbidden", mimetype="text/plain", status=403)
 	  files = sorted(map(lambda x: os.path.join(path,x), filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir(os.path.join(rootPath, path)))))
-	  dirs = filter(lambda x: os.path.isdir(os.path.join(rootPath, path, x)),os.listdir(os.path.join(rootPath, path)))
+	  dirs = sorted(filter(lambda x: os.path.isdir(os.path.join(rootPath, path, x)),os.listdir(os.path.join(rootPath, path))))
 	  files = map(_getOggedFilename, files)
-	  print files
 	else:
 	  dirs = filter(lambda x: os.path.isdir(os.path.join(rootPath, x)),os.listdir(rootPath))
 	  files = sorted(filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir("music")))
