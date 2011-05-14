@@ -127,13 +127,27 @@ $(document).ready( function() {
 			accept: ".connectedSortable li",
 			hoverClass: "ui-state-hover",
 			drop: function( event, ui ) {
+// Insert playlist update magic HERE!
+				playListMetaData = JSON.parse(localStorage["playListMetaData"]);
+				filesMetaData = JSON.parse(localStorage["filesMetaData"]);
+				length = playListMetaData.length;
 				var $item = $( this );
 				var $list = $( $item.find( "a" ).attr( "href" ) )
 					.find( ".connectedSortable" );
 
 				ui.draggable.hide( "slow", function() {
+					num = $("a",$(this)).attr("data-num");
 					$tabs.tabs( "select", $tab_items.index( $item ) );
-					$( this ).appendTo( $list ).show( "slow" );
+					$copy = $(this).clone();
+					$("a",$copy).attr("class", $("a",$(this)).attr("class").replace("songItem"+num, "songItem"+length));
+					$("a",$copy).attr("data-num", length);
+					$("a",$copy).get(0).setAttribute('onclick', 'localStorage["currentList"]="#playList";loadSong("'+filesMetaData[num][0]+'", '+length+');return false;');
+					playListMetaData[length] = filesMetaData[num];
+					localStorage["playListMetaData"] = JSON.stringify(playListMetaData);
+					$copy.appendTo( $list ).show( "slow" );
+					//$("#playList").append($("<li><a href='#' data-num='"+length+"' class='songItem"+length+"'>"+$("a", $(this)).text()+"</a>"));
+					// hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
+					//$('#playList .songItem'+length).get(0).setAttribute('onclick', 'localStorage["currentList"]="#playList";loadSong("'+files[i][0]+'", '+length+');return false;');
 				});
 			}
 		})
@@ -269,7 +283,7 @@ function getFilesCallback(files, dirs, path, playList) {
 	  } else {
 		title = files[i][1]["title"];
 	  }
-	  $(list).append($("<li><a href='#' class='songItem"+i+"'>"+title+"</a>"));
+	  $(list).append($("<li><a href='#' data-num='"+i+"' class='songItem"+i+"'>"+title+"</a>"));
 	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
 	  $(list+' .songItem'+i).get(0).setAttribute('onclick', 'localStorage["currentList"]="'+list+'";loadSong("'+files[i][0]+'", '+i+');return false;');
     
@@ -297,7 +311,7 @@ function playNext() {
   
 }
 function playPrev() {
-  $(clocalStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().prev().children().click();
+  $(localStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().prev().children().click();
   
 }
 </script>

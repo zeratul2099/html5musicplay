@@ -31,14 +31,14 @@ def getFiles(request):
 	  dirs = filter(lambda x: os.path.isdir(os.path.join(rootPath, x)),os.listdir(rootPath))
 	  files = sorted(filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir("music")))
 
-	fileData = {}
+	fileData = []
 	for i, fileName in enumerate(files):
 	  if not fileName.endswith(".mp3.ogg"):
 		tags = dict(mutagen.File(os.path.join(rootPath, fileName), easy=True))
-		fileData[i] = (fileName, tags)
+		fileData.append((fileName, tags))
 	  else:
 		tags = dict(mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True))
-		fileData[i] = (fileName, tags)
+		fileData.append((fileName, tags))
 	return HttpResponse(json.dumps([fileData,dirs]), mimetype="application/json")
   except Exception, e:
 	print e
@@ -48,14 +48,14 @@ def getPlaylist(request):
   path = "Blind Guardian - At The Edge Of Time"
   files = sorted(map(lambda x: os.path.join(path,x), filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir(os.path.join(rootPath, path)))))
   files = map(_getOggedFilename, files)
-  fileData = {}
+  fileData = []
   for i, fileName in enumerate(files):
 	if not fileName.endswith(".mp3.ogg"):
 	  tags = dict(mutagen.File(os.path.join(rootPath, fileName), easy=True))
-	  fileData[i] = (fileName, tags)
+	  fileData.append((fileName, tags))
 	else:
 	  tags = dict(mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True))
-	  fileData[i] = (fileName, tags)
+	  fileData.append((fileName, tags))
   return HttpResponse(json.dumps([fileData,{}]), mimetype="application/json")
 	  
 def _getOggedFilename(filename):
