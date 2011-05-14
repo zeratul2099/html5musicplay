@@ -1,4 +1,5 @@
 # Django settings for html5musicplay project.
+# Make local changes and save as settings.py
 import os
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -122,8 +123,11 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
 )
-MUSIC_ROOT = PROJ_DIR+'/music/'
-MUSIC_ROOT = "/home/zeratul/music/"
+# set this to your music library
+MUSIC_ROOT = ""
+# set this to where converted files should be saved, e.g. "/tmp/html5playerCache/"
+CACHE_ROOT = "/tmp/html5playerCache/"
+
 CSS_ROOT = PROJ_DIR+'/css/'
 STATIC_ROOT = PROJ_DIR+'/staticfiles/'
 # A sample logging configuration. The only tangible logging

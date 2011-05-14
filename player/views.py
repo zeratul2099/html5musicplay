@@ -10,7 +10,7 @@ import mutagen
 
 
 rootPath = settings.MUSIC_ROOT
-cacheDir = "/tmp/html5playerCache/"
+cacheDir = settings.CACHE_ROOT
 def home(request):
 
   return render_to_response("mainview.html",{});
