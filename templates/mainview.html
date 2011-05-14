@@ -80,6 +80,11 @@ $('html').ajaxSend(function(event, xhr, settings) {
 #fileList li, #playList li { margin: 0 5px 5px 5px; padding: 5px;  width: 300px }
 
 .tabitem a { width:300px }	
+	#loadingSpan {
+	  margin-top: 1em;
+	  float: left;
+
+  }
 	</style>
 </head>
 <body>
@@ -126,7 +131,10 @@ $(document).ready( function() {
 
   
   $( "#fileList li" ).draggable({revert:true});
-  $( "#playList" ).sortable().disableSelection();
+  $( "#playList" ).sortable({
+			update: function(event, ui) {savePlayListOrder()},
+			placeholder: "ui-state-highlight"
+		}).disableSelection();
   var $tabs = $("#tabs").tabs();
   var $tab_items = $( "#playListTab" ).droppable({
 			accept: "#fileList.connectedSortable li",
@@ -157,6 +165,7 @@ $(document).ready( function() {
 					playListMetaData[length] = filesMetaData[num];
 					localStorage["playListMetaData"] = JSON.stringify(playListMetaData);
 					$copy.appendTo( $list ).show( "slow" );
+					savePlayListOrder();
 					ui.draggable.show("clip","slow");
 				});
 				
@@ -168,9 +177,11 @@ $(document).ready( function() {
   }
   if (localStorage["playListMetaData"] != undefined) {
 	getFilesCallback(JSON.parse(localStorage["playListMetaData"]), null, null, true);
+	sortPlayList();
 
   }
   getFiles(localStorage["currentPath"]);
+  $("#tabs").tabs( "select", localStorage["currentList"]+"Div" );
   updateAudioInfo();
   $(player).bind('ended', function(){playNext()});
   $(player).bind('timeupdate', function(){updateAudioInfo()});
@@ -210,7 +221,6 @@ function updateAudioInfo() {
   $('#albumSpan').text(album);
   }
   $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(player.duration)));
-  //$('#currentTrackSpan').text(localStorage["currentTrack"]+1);
   progress = player.currentTime * 100 / player.duration;
   $('#progressbar div').animate({'width': progress + '%' },{ queue:false, duration:500, easing:"linear" });
    
@@ -285,6 +295,7 @@ function getFilesCallback(files, dirs, path, playList) {
 	list = "#fileList";
   } else {
 	localStorage["playListMetaData"] = JSON.stringify(files);
+	
 	list = "#playList";
 	$(list).empty();
   }
@@ -292,7 +303,7 @@ function getFilesCallback(files, dirs, path, playList) {
 	  if (files[i][1]["title"] == undefined) {
 		title = files[i][0];
 	  } else {
-		title = files[i][1]["title"];
+		title = files[i][1]["artist"]+" - "+files[i][1]["title"];
 	  }
 	  $(list).append($("<li><a href='#' data-num='"+i+"' class='songItem"+i+"'>"+title+"</a>"));
 	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
@@ -301,7 +312,6 @@ function getFilesCallback(files, dirs, path, playList) {
 
 	}
 	$( "#fileList li" ).draggable({revert:true});
-	//loadSong(files[0][0],0);
 }
 function getParentDir(path) {
   list = path.split("/");
@@ -320,24 +330,39 @@ function playNext() {
 	}
   }
   $(nextEle).click();
-  
 }
 function playPrev() {
   $(localStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().prev().children().click();
-  
 }
 function clearPlayList() {
   localStorage["playListMetaData"] = "";
+  localStorage["playListOrder"] = "";
   $("#playList").empty();
+}
+function savePlayListOrder() {
+  playListOrder = new Array();
+  $("#playlist a").each(function(i,el){playListOrder[(parseInt($(el).data("num")))]=i});
+  localStorage["playListOrder"] = JSON.stringify(playListOrder);
+}
+function sortPlayList() {
+  var order = JSON.parse(localStorage["playListOrder"]);
+  var playlist = $('#playList');
+  var listitems = playlist.children("li").get();
+  listitems.sort (function(a, b){
+	  var posA = order[parseInt($("a", a).data("num"))];
+	  var posB = order[parseInt($("a", b).data("num"))];
+	  return (posA < posB) ? -1 : (posA > posB) ? 1 : 0;
+  });
+  $.each(listitems, function(idx, itm) { playlist.append(itm); });
 
 }
+
 </script>
 <div id='playerDiv'>
 <div id='songInfoDiv'>
 <div>Artist: <span id="artistSpan"></span></div>
 <div>Title: <span id="titleSpan"></span></div>
 <div>Album: <span id="albumSpan"></span></div>
-<div>Track Number: <span id="currentTrackSpan"></span></div>
 <div id='progressbar'></div>
 </div>
 
@@ -359,7 +384,7 @@ function clearPlayList() {
 </span>
 </span>
 <span id="durationSpan" class="ui-widget-header ui-corner-all toolbar"><span></span></span>
-<span id="loadingSpan" style="display:none">Loading...</span>
+<span id="loadingSpan" style="display:none"><img src="/staticfiles/ajax-loader.gif"/>&nbsp;Loading...</span>
 </div>
 <div id='tabs'>
   <ul>

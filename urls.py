@@ -14,6 +14,8 @@ urlpatterns = patterns('',
      url(r'^music/(?P<filepath>.*)$', 'html5musicplay.player.views.fileConverter'),
      (r'^css/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': settings.CSS_ROOT}),
+     (r'^staticfiles/(?P<path>.*)$', 'django.views.static.serve',
+        {'document_root': settings.STATIC_ROOT}),
     # url(r'^html5musicplay/', include('html5musicplay.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

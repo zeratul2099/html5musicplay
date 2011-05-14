@@ -125,6 +125,7 @@ INSTALLED_APPS = (
 MUSIC_ROOT = PROJ_DIR+'/music/'
 MUSIC_ROOT = "/home/zeratul/music/"
 CSS_ROOT = PROJ_DIR+'/css/'
+STATIC_ROOT = PROJ_DIR+'/staticfiles/'
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
 # the site admins on every HTTP 500 error.
