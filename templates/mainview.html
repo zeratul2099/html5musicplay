@@ -1,6 +1,6 @@
 <html><head>
 <title></title>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.0/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
 <script type="text/javascript">
 $('html').ajaxSend(function(event, xhr, settings) {
@@ -132,7 +132,6 @@ $(document).ready( function() {
 			accept: "#fileList.connectedSortable li",
 			hoverClass: "ui-state-hover",
 			drop: function( event, ui ) {
-// Insert playlist update magic HERE!
 				if (localStorage["playListMetaData"] != undefined && localStorage["playListMetaData"] != "") {
 				  playListMetaData = JSON.parse(localStorage["playListMetaData"]);
 				  length = playListMetaData.length;
@@ -158,9 +157,6 @@ $(document).ready( function() {
 					playListMetaData[length] = filesMetaData[num];
 					localStorage["playListMetaData"] = JSON.stringify(playListMetaData);
 					$copy.appendTo( $list ).show( "slow" );
-					//$("#playList").append($("<li><a href='#' data-num='"+length+"' class='songItem"+length+"'>"+$("a", $(this)).text()+"</a>"));
-					// hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
-					//$('#playList .songItem'+length).get(0).setAttribute('onclick', 'localStorage["currentList"]="#playList";loadSong("'+files[i][0]+'", '+length+');return false;');
 					ui.draggable.show("clip","slow");
 				});
 				
