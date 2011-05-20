@@ -33,11 +33,13 @@ def getFiles(request):
 	fileData = []
 	for i, fileName in enumerate(files):
 	  if not fileName.endswith(".mp3.ogg"):
-		tags = dict(mutagen.File(os.path.join(rootPath, fileName), easy=True))
-		fileData.append((fileName, tags))
+		tagData = mutagen.File(os.path.join(rootPath, fileName), easy=True)
 	  else:
-		tags = dict(mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True))
-		fileData.append((fileName, tags))
+		tagData = mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True)
+	  tags = dict(tagData)
+	  tags["length"] = tagData.info.length
+	  fileData.append((fileName, tags))
+
 	return HttpResponse(json.dumps([fileData,dirs]), mimetype="application/json")
   except Exception, e:
 	print e
@@ -74,26 +76,25 @@ def fileConverter(request, filepath):
 		if not os.path.exists(os.path.join(cacheDir,dir)):
 		  print "creating "+cacheDir+dir
 		  os.makedirs(os.path.join(cacheDir, dir))
-		frommp3 = subprocess.Popen(['mpg123', '-w', '-', os.path.join(rootPath, filepath)[:-4]], stdout=subprocess.PIPE)
-		toogg = subprocess.Popen(['oggenc', '-'], stdin=frommp3.stdout, stdout=subprocess.PIPE)
-		with open(os.path.join(cacheDir,filepath), 'wb') as outfile:
-		  while True:
-			  data = toogg.stdout.read(1024 * 100)
-			  if not data:
-				  break
-			  outfile.write(data)
-	  wrapper = FileWrapper(file(os.path.join(cacheDir,filepath)))
 
-	  response = HttpResponse(wrapper, mimetype='application/ogg')
-	  response['Content-Length'] = os.path.getsize(os.path.join(cacheDir,filepath))
-
+	  response = HttpResponse(convert(filepath), mimetype='application/ogg')
 	  response['Content-Disposition'] = 'attachment; filename='+filepath.encode("utf8")
 	  return response
 	except Exception, e:
 	  raise
 
+def convert(filepath):
+  frommp3 = subprocess.Popen(['mpg123', '-w', '-', os.path.join(rootPath, filepath)[:-4]], stdout=subprocess.PIPE)
+  toogg = subprocess.Popen(['oggenc', '-'], stdin=frommp3.stdout, stdout=subprocess.PIPE)
+  with open(os.path.join(cacheDir,filepath), 'wb') as outfile:
+	while True:
+	  data = toogg.stdout.read(1024 * 100)
+	  if not data:
+		break
+	  outfile.write(data)
+	  yield data
+
 # TODO:
-# stream file during conversion
 # style player
 # seeking
 # scrobble

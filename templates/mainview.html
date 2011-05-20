@@ -238,12 +238,13 @@ function updateAudioInfo() {
   } else {
 	album = metaData[localStorage["currentTrack"]][1]["album"][0];
   }
+  var duration = metaData[localStorage["currentTrack"]][1]["length"]
   $('#artistSpan').text(artist);
   $('#titleSpan').text(title);
   $('#albumSpan').text(album);
   }
-  $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(player.duration)));
-  progress = player.currentTime * 100 / player.duration;
+  $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(duration)));
+  progress = player.currentTime * 100 / duration;
   $('#progressbar div').animate({'width': progress + '%' },{ queue:false, duration:500, easing:"linear" });
   
    
