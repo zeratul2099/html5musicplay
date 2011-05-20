@@ -345,11 +345,12 @@ function getParentDir(path) {
 }
 function playNext() {
   numTracks = $(localStorage["currentList"]).children().length;
-  if ($('#shuffleBtn').attr("checked")) {
+  if ($('#shuffleBtn').prop("checked")) {
     nextTrack = parseInt(Math.random()*numTracks);
+	nextEle = $(localStorage["currentList"]+' .songItem'+(nextTrack)).parent().next().children();
   } else {
 	nextEle = $(localStorage["currentList"]+' .songItem'+(localStorage["currentTrack"])).parent().next().children();
-	if ($('#repeatBtn').attr("checked") && nextEle.length == 0) {
+	if ($('#repeatBtn').prop("checked") && nextEle.length == 0) {
 	  nextEle = $($(localStorage["currentList"]).children()[0]).children();
 	}
   }

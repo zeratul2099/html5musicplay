@@ -95,6 +95,7 @@ def convert(filepath):
 	  yield data
 
 # TODO:
+# random never plays #0
 # style player
 # seeking
 # scrobble
