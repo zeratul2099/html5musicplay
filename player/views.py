@@ -9,7 +9,7 @@ import subprocess
 import mutagen
 import time
 import multiprocessing
-from multiprocessing import Queue, Process
+from threading import Thread
 import Queue as Q
 rootPath = settings.MUSIC_ROOT
 cacheDir = settings.CACHE_ROOT
@@ -64,10 +64,10 @@ def fileConverter(request, filepath):
 		if not os.path.exists(os.path.join(cacheDir,dir)):
 		  print "creating "+cacheDir+dir
 		  os.makedirs(os.path.join(cacheDir, dir))
-		queue = Queue()
-		p = Process(target=convert, args=(filepath, queue))
-		p.start()
-		response = HttpResponse(fileReturner(queue, p), mimetype='application/ogg')
+		queue = Q.Queue()
+		t = Thread(target=convert, args=(filepath, queue))
+		t.start()
+		response = HttpResponse(fileReturner(queue, t), mimetype='application/ogg')
 		response['Content-Length'] = os.path.getsize(os.path.join(rootPath, filepath)[:-4])
 	  else:
 		
@@ -79,10 +79,8 @@ def fileConverter(request, filepath):
 	  return response
 	except Exception, e:
 	  print e
-	  #raise
-	except:
-	  print "EXCEPTION: EMERGENCY JOIN!"
-	  p.join()
+	  t.join()
+
 
 def convert(filepath, queue):
   frommp3 = subprocess.Popen(['mpg123', '-w', '-', os.path.join(rootPath, filepath)[:-4]], stdout=subprocess.PIPE)
@@ -96,20 +94,20 @@ def convert(filepath, queue):
 	  outfile.write(data)
 	  queue.put(data)
 	  
-def fileReturner(queue, process):
+def fileReturner(queue, thread):
   while True:
 	try:
 	  data = queue.get(True, 5)
 	  
 	  if data == "EOL":
 		print "EOL"
-		process.join()
+		thread.join()
 		break
 	  print "delivering stuff"
 	  yield data
 	except:
 	  print "finish"
-	  process.join(5)
+	  thread.join()
 	  break
 
 # TODO:
