@@ -7,8 +7,10 @@ from django.core.servers.basehttp import FileWrapper
 import django.views.static
 import subprocess
 import mutagen
-
-
+import time
+import multiprocessing
+from multiprocessing import Queue, Process
+import Queue as Q
 rootPath = settings.MUSIC_ROOT
 cacheDir = settings.CACHE_ROOT
 def home(request):
@@ -44,20 +46,6 @@ def getFiles(request):
   except Exception, e:
 	print e
 
-def getPlaylist(request):
-  """ test implementation """
-  path = "Blind Guardian - At The Edge Of Time"
-  files = sorted(map(lambda x: os.path.join(path,x), filter(lambda x: x.endswith(".ogg") or x.endswith(".mp3"),os.listdir(os.path.join(rootPath, path)))))
-  files = map(_getOggedFilename, files)
-  fileData = []
-  for i, fileName in enumerate(files):
-	if not fileName.endswith(".mp3.ogg"):
-	  tags = dict(mutagen.File(os.path.join(rootPath, fileName), easy=True))
-	  fileData.append((fileName, tags))
-	else:
-	  tags = dict(mutagen.File(os.path.join(rootPath, fileName)[:-4], easy=True))
-	  fileData.append((fileName, tags))
-  return HttpResponse(json.dumps([fileData,{}]), mimetype="application/json")
 	  
 def _getOggedFilename(filename):
   if filename.endswith(".mp3"):
@@ -76,25 +64,58 @@ def fileConverter(request, filepath):
 		if not os.path.exists(os.path.join(cacheDir,dir)):
 		  print "creating "+cacheDir+dir
 		  os.makedirs(os.path.join(cacheDir, dir))
+		queue = Queue()
+		p = Process(target=convert, args=(filepath, queue))
+		p.start()
+		response = HttpResponse(fileReturner(queue, p), mimetype='application/ogg')
+		response['Content-Length'] = os.path.getsize(os.path.join(rootPath, filepath)[:-4])
+	  else:
+		
 
-	  response = HttpResponse(convert(filepath), mimetype='application/ogg')
+		wrapper = FileWrapper(file(os.path.join(cacheDir,filepath)))
+		response = HttpResponse(wrapper, mimetype='application/ogg')
+		response['Content-Length'] = os.path.getsize(os.path.join(cacheDir,filepath))
 	  response['Content-Disposition'] = 'attachment; filename='+filepath.encode("utf8")
 	  return response
-	except Exception, e:
-	  raise
+	#except Exception, e:
+	  #print e
+	  #raise
+	except:
+	  #pass
+	  p.terminate()
 
-def convert(filepath):
+def convert(filepath, queue):
   frommp3 = subprocess.Popen(['mpg123', '-w', '-', os.path.join(rootPath, filepath)[:-4]], stdout=subprocess.PIPE)
   toogg = subprocess.Popen(['oggenc', '-'], stdin=frommp3.stdout, stdout=subprocess.PIPE)
   with open(os.path.join(cacheDir,filepath), 'wb') as outfile:
 	while True:
 	  data = toogg.stdout.read(1024 * 100)
 	  if not data:
+		queue.put("EOL")
 		break
 	  outfile.write(data)
+	  queue.put(data)
+	  
+def fileReturner(queue, process):
+  while True:
+	try:
+	  data = queue.get(True, 5)
+	  
+	  if data == "EOL":
+		print "EOL"
+		process.join()
+		break
+	  print "delivering stuff"
 	  yield data
+	except Q.Empty:
+	  print "finish"
+	  process.join()
+	  break
 
 # TODO:
+# broken pipe on stream in chrome
+# converter process not terminating on broken pipe
+# error at end of streamed songs
 # random never plays #0
 # style player
 # seeking

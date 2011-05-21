@@ -275,11 +275,15 @@ function stopPlaying() {
   player.currentTime=0;
 }
 function loadSong(song, trackNumber) {
-player.setAttribute('src', '/music/'+song);
+  //var tmp = new Image();
+  //tmp.src = '/music/'+song;
+ // $.post('/music/'+song, {}, function(){;
+  player.setAttribute('src', '/music/'+song);
 
-player.load();
-playPause();
-localStorage["currentTrack"] = trackNumber;
+  player.load();
+  playPause();
+  localStorage["currentTrack"] = trackNumber;
+//})
 }
 function playPause() {
   if (player.paused) {
