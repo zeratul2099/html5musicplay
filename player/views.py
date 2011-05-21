@@ -77,12 +77,12 @@ def fileConverter(request, filepath):
 		response['Content-Length'] = os.path.getsize(os.path.join(cacheDir,filepath))
 	  response['Content-Disposition'] = 'attachment; filename='+filepath.encode("utf8")
 	  return response
-	#except Exception, e:
-	  #print e
+	except Exception, e:
+	  print e
 	  #raise
 	except:
-	  #pass
-	  p.terminate()
+	  print "EXCEPTION: EMERGENCY JOIN!"
+	  p.join()
 
 def convert(filepath, queue):
   frommp3 = subprocess.Popen(['mpg123', '-w', '-', os.path.join(rootPath, filepath)[:-4]], stdout=subprocess.PIPE)
@@ -107,9 +107,9 @@ def fileReturner(queue, process):
 		break
 	  print "delivering stuff"
 	  yield data
-	except Q.Empty:
+	except:
 	  print "finish"
-	  process.join()
+	  process.join(5)
 	  break
 
 # TODO:
