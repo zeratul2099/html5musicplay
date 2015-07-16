@@ -68,7 +68,7 @@ def fileConverter(request, filepath):
 		t = Thread(target=convert, args=(filepath, queue))
 		t.start()
 		response = HttpResponse(fileReturner(queue, t), mimetype='application/ogg')
-		response['Content-Length'] = os.path.getsize(os.path.join(rootPath, filepath)[:-4])
+		#response['Content-Length'] = os.path.getsize(os.path.join(rootPath, filepath)[:-4])
 	  else:
 		
 
@@ -112,10 +112,11 @@ def fileReturner(queue, thread):
 
 # TODO:
 # broken pipe on stream in chrome
-# converter process not terminating on broken pipe
 # error at end of streamed songs
+# length too short
 # random never plays #0
 # style player
 # seeking
 # scrobble
 # handle converting error
+# display web context information (lyrics/lastfm)

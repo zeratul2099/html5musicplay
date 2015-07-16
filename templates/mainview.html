@@ -246,6 +246,9 @@ function updateAudioInfo() {
   $('#durationSpan').text(convertSeconds(parseInt(player.currentTime))+" / "+convertSeconds(parseInt(duration)));
   progress = player.currentTime * 100 / duration;
   $('#progressbar div').animate({'width': progress + '%' },{ queue:false, duration:500, easing:"linear" });
+  if (convertSeconds(parseInt(player.currentTime)) == convertSeconds(parseInt(duration))) {
+	playNext();
+  }
   
    
 }
@@ -254,7 +257,7 @@ function convertSeconds(seconds) {
 	return "0:00";
   }
   minutes = parseInt(seconds / 60);
-  seconds = seconds % 60;
+  seconds = parseInt(seconds % 60);
   if (seconds < 10) {
 	  seconds = "0"+seconds
   }
@@ -333,7 +336,7 @@ function getFilesCallback(files, dirs, path, playList) {
 	  } else {
 		title = files[i][1]["artist"]+" - "+files[i][1]["title"];
 	  }
-	  $(list).append($("<li><a href='#' data-num='"+i+"' class='songItem"+i+"'>"+title+"</a>"));
+	  $(list).append($("<li><a href='#' data-num='"+i+"' class='songItem"+i+"'>"+title+" ("+convertSeconds(files[i][1]["length"])+")</a>"));
 	  // hack: $.attr('onclick', foo) doesn't work in chrome, $.bind('click', foo) binds the last handler to every item (at least in opera)
 	  $(list+' .songItem'+i).get(0).setAttribute('onclick', 'localStorage["currentList"]="'+list+'";loadSong("'+files[i][0]+'", '+i+');return false;');
 	  
